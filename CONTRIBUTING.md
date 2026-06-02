@@ -5,7 +5,7 @@ so contributions of any size — bug reports, docs, or code — are very welcome
 
 ## Development setup
 
-You need a Rust toolchain (1.85 or newer) and a reachable Docker daemon for
+You need a Rust toolchain (1.88 or newer) and a reachable Docker daemon for
 manual testing.
 
 ```sh

@@ -3,7 +3,7 @@
 [![CI](https://github.com/cclxxi/stevedore/actions/workflows/ci.yml/badge.svg)](https://github.com/cclxxi/stevedore/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/stevedore.svg)](https://crates.io/crates/stevedore)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.88%2B-orange.svg)](https://www.rust-lang.org)
 
 A super-lightweight terminal UI for monitoring Docker containers and their logs —
 a tiny, read-only alternative to Portainer that runs straight in your console.
@@ -34,7 +34,7 @@ the local Docker socket.
 
 - A reachable Docker daemon (default socket `/var/run/docker.sock`)
 - Your user must be able to access the socket (the `docker` group, or run with `sudo`)
-- Rust 1.85+ (only when building from source)
+- Rust 1.88+ (only when building from source)
 
 ## Install
 

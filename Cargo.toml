@@ -2,7 +2,7 @@
 name = "stevedore"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.88"
 description = "A super-lightweight TUI for monitoring Docker containers and logs"
 authors = ["Ilia Proshin <ilia.proshin.dev@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -29,3 +29,8 @@ lto = true
 strip = true
 codegen-units = 1
 panic = "abort"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
