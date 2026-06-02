@@ -38,29 +38,31 @@ the local Docker socket.
 
 ## Install
 
+### Homebrew (macOS / Linux)
+
+```sh
+brew install cclxxi/tap/stevedore
+```
+
+### Install script (no Rust needed)
+
+Installs the latest release binary for your platform:
+
+```sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/cclxxi/stevedore/releases/latest/download/stevedore-installer.sh | sh
+```
+
+### Prebuilt binaries
+
+Download a tarball for your platform from the
+[Releases](https://github.com/cclxxi/stevedore/releases) page.
+
 ### From source
 
 ```sh
 git clone https://github.com/cclxxi/stevedore
 cd stevedore
 cargo install --path .
-```
-
-### From crates.io
-
-```sh
-cargo install stevedore
-```
-
-### Prebuilt binaries
-
-Prebuilt binaries for Linux and macOS, a one-line `install.sh`, and a Homebrew
-tap are published with each tagged release — see the
-[Releases](https://github.com/cclxxi/stevedore/releases) page.
-
-```sh
-# Homebrew (once the tap is published)
-brew install cclxxi/tap/stevedore
 ```
 
 ## Usage
