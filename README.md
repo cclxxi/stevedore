@@ -1,5 +1,7 @@
 # stevedore
 
+**English** · [Русский](./README.ru.md)
+
 [![CI](https://github.com/cclxxi/stevedore/actions/workflows/ci.yml/badge.svg)](https://github.com/cclxxi/stevedore/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/stevedore.svg)](https://crates.io/crates/stevedore)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
