@@ -11,9 +11,9 @@ a tiny, read-only alternative to Portainer that runs straight in your console.
 No web server, no agent, no database. Just a single **~1 MB** binary that talks to
 the local Docker socket.
 
-<!-- Record a demo with vhs (https://github.com/charmbracelet/vhs):
-     `vhs assets/demo.tape` → assets/demo.gif, then it shows up below. -->
-![demo](assets/demo.gif)
+<!-- Absolute URL so the demo renders on both GitHub and crates.io.
+     Regenerate with: vhs assets/demo.tape -->
+![demo](https://raw.githubusercontent.com/cclxxi/stevedore/master/assets/demo.gif)
 
 ## Why stevedore
 
@@ -50,6 +50,12 @@ Installs the latest release binary for your platform:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/cclxxi/stevedore/releases/latest/download/stevedore-installer.sh | sh
+```
+
+### From crates.io
+
+```sh
+cargo install stevedore
 ```
 
 ### Prebuilt binaries
