@@ -22,6 +22,8 @@ pub enum AppMessage {
     LogLine { container_id: String, line: String },
     /// The log stream for the given container ended (container stopped or error).
     LogEnded { container_id: String },
+    /// A transient success/info message to show on the status line.
+    Status(String),
     /// A non-fatal error to show on the status line.
     Error(String),
 }

@@ -11,6 +11,7 @@ use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 
 use crate::docker::DockerClient;
+use crate::docker::actions::{self, Action};
 use crate::docker::logs;
 use crate::docker::model::{Container, ContainerStats};
 use crate::event::AppMessage;
@@ -61,6 +62,13 @@ impl LogState {
     }
 }
 
+/// A destructive action staged and waiting for the user to confirm or cancel.
+pub struct PendingAction {
+    pub action: Action,
+    pub container_id: String,
+    pub container_name: String,
+}
+
 /// The complete application state.
 pub struct App {
     pub containers: Vec<Container>,
@@ -74,6 +82,8 @@ pub struct App {
     pub view: View,
     pub show_all: bool,
     pub show_help: bool,
+    /// A destructive action awaiting confirmation, shown as an overlay.
+    pub confirm: Option<PendingAction>,
     pub logs: LogState,
     pub status: Option<String>,
     pub should_quit: bool,
@@ -91,6 +101,7 @@ impl App {
             view: View::List,
             show_all: false,
             show_help: false,
+            confirm: None,
             logs: LogState {
                 follow: true,
                 ..Default::default()
@@ -141,6 +152,7 @@ impl App {
                     self.push_log_line(container_id, "[log stream ended]".to_string());
                 }
             }
+            AppMessage::Status(message) => self.status = Some(message),
             AppMessage::Error(message) => self.status = Some(message),
         }
     }
@@ -150,6 +162,11 @@ impl App {
         // Help overlay swallows the next keypress.
         if self.show_help {
             self.show_help = false;
+            return;
+        }
+        // A pending confirmation captures input until it is resolved.
+        if self.confirm.is_some() {
+            self.on_key_confirm(key, ctx);
             return;
         }
         match self.view {
@@ -172,7 +189,19 @@ impl App {
                 self.clamp_selection();
             }
             KeyCode::Enter | KeyCode::Char('l') => self.open_logs(ctx),
+            KeyCode::Char('S') => self.run_action(Action::Start, ctx),
+            KeyCode::Char('s') => self.run_action(Action::Stop, ctx),
+            KeyCode::Char('r') => self.run_action(Action::Restart, ctx),
+            KeyCode::Char('x') | KeyCode::Char('d') => self.run_action(Action::Remove, ctx),
             _ => {}
+        }
+    }
+
+    /// Handle a keypress while the confirmation overlay is up.
+    fn on_key_confirm(&mut self, key: KeyEvent, ctx: &Context) {
+        match key.code {
+            KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => self.confirm_pending(ctx),
+            _ => self.cancel_confirm(),
         }
     }
 
@@ -239,6 +268,60 @@ impl App {
     fn close_logs(&mut self) {
         self.logs.reset();
         self.view = View::List;
+    }
+
+    /// Begin a lifecycle action on the selected container. Destructive actions
+    /// are staged for confirmation; the rest are dispatched immediately.
+    fn run_action(&mut self, action: Action, ctx: &Context) {
+        if let Some(pending) = self.request_action(action) {
+            Self::dispatch(pending, ctx);
+        }
+    }
+
+    /// Resolve a requested action against the current selection.
+    ///
+    /// Returns the action to dispatch now, or `None` when there is nothing to
+    /// do — either no container is selected (a status is set) or the action is
+    /// destructive and has been staged in `confirm` for the user to confirm.
+    fn request_action(&mut self, action: Action) -> Option<PendingAction> {
+        let Some(container) = self.selected_container() else {
+            self.status = Some("No container selected".to_string());
+            return None;
+        };
+        let pending = PendingAction {
+            action,
+            container_id: container.id.clone(),
+            container_name: container.name.clone(),
+        };
+        if action.is_destructive() {
+            self.confirm = Some(pending);
+            None
+        } else {
+            Some(pending)
+        }
+    }
+
+    /// Dispatch the staged action and clear the confirmation overlay.
+    fn confirm_pending(&mut self, ctx: &Context) {
+        if let Some(pending) = self.confirm.take() {
+            Self::dispatch(pending, ctx);
+        }
+    }
+
+    /// Dismiss the confirmation overlay without acting.
+    fn cancel_confirm(&mut self) {
+        self.confirm = None;
+    }
+
+    /// Spawn the background Docker task for a pending action.
+    fn dispatch(pending: PendingAction, ctx: &Context) {
+        actions::spawn(
+            ctx.docker.clone(),
+            ctx.tx.clone(),
+            pending.action,
+            pending.container_id,
+            pending.container_name,
+        );
     }
 
     fn push_log_line(&mut self, container_id: String, line: String) {
@@ -351,6 +434,56 @@ mod tests {
         app.logs.container_id = Some("current".to_string());
         app.push_log_line("other".to_string(), "noise".to_string());
         assert!(app.logs.lines.is_empty());
+    }
+
+    #[test]
+    fn requesting_remove_stages_a_confirmation() {
+        let mut app = app_with(vec![container("web", ContainerState::Running)]);
+
+        let dispatch = app.request_action(Action::Remove);
+
+        assert!(
+            dispatch.is_none(),
+            "destructive action must not dispatch immediately"
+        );
+        let pending = app.confirm.as_ref().expect("confirmation should be staged");
+        assert_eq!(pending.action, Action::Remove);
+        assert_eq!(pending.container_name, "web");
+    }
+
+    #[test]
+    fn requesting_non_destructive_action_dispatches_without_confirmation() {
+        let mut app = app_with(vec![container("web", ContainerState::Running)]);
+
+        let pending = app
+            .request_action(Action::Stop)
+            .expect("non-destructive action should be dispatched");
+
+        assert_eq!(pending.action, Action::Stop);
+        assert_eq!(pending.container_id, "web");
+        assert!(app.confirm.is_none());
+    }
+
+    #[test]
+    fn requesting_action_without_selection_sets_status() {
+        let mut app = App::new("test".to_string());
+
+        let pending = app.request_action(Action::Start);
+
+        assert!(pending.is_none());
+        assert!(app.confirm.is_none());
+        assert_eq!(app.status.as_deref(), Some("No container selected"));
+    }
+
+    #[test]
+    fn cancelling_confirmation_clears_pending_action() {
+        let mut app = app_with(vec![container("web", ContainerState::Running)]);
+        app.request_action(Action::Remove);
+        assert!(app.confirm.is_some());
+
+        app.cancel_confirm();
+
+        assert!(app.confirm.is_none());
     }
 
     #[test]

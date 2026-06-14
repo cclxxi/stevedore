@@ -1,12 +1,13 @@
 //! Rendering layer. Pure functions of [`App`] → frame; no state mutation here.
 
+mod confirm;
 mod containers;
 mod detail;
 mod help;
 mod logs;
 
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
@@ -43,6 +44,18 @@ pub fn render(frame: &mut Frame, app: &App) {
     if app.show_help {
         help::render(frame, area);
     }
+    if let Some(pending) = &app.confirm {
+        confirm::render(frame, area, pending);
+    }
+}
+
+/// Center a fixed-size rect inside `area`. Shared by the modal overlays.
+pub(super) fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
+    let [h] = Layout::horizontal([horizontal])
+        .flex(Flex::Center)
+        .areas(area);
+    let [v] = Layout::vertical([vertical]).flex(Flex::Center).areas(h);
+    v
 }
 
 fn render_header(frame: &mut Frame, app: &App, area: Rect) {
@@ -77,7 +90,7 @@ fn render_footer(frame: &mut Frame, app: &App, area: Rect) {
     }
 
     let hint = match app.view {
-        View::List => " ↑↓/jk move · a all/running · enter logs · ? help · q quit",
+        View::List => " ↑↓/jk move · a all · enter logs · s/S/r/x actions · ? help · q quit",
         View::Logs => " ↑↓/jk scroll · PgUp/PgDn page · g/G top/bottom · f follow · q back",
     };
     let line = Line::from(Span::styled(hint, Style::default().fg(Color::DarkGray)));
