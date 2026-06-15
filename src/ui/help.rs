@@ -1,14 +1,16 @@
 //! Centered help overlay listing all keybindings.
 
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Flex, Layout, Rect};
+use ratatui::layout::{Constraint, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 
+use super::center;
+
 /// Render the help popup centered over the given area.
 pub fn render(frame: &mut Frame, area: Rect) {
-    let popup = center(area, Constraint::Length(46), Constraint::Length(16));
+    let popup = center(area, Constraint::Length(46), Constraint::Length(21));
 
     let block = Block::default()
         .borders(Borders::ALL)
@@ -23,6 +25,9 @@ pub fn render(frame: &mut Frame, area: Rect) {
         Line::from(""),
         section("Containers"),
         key("Enter / l", "open logs"),
+        key("S / s", "start / stop"),
+        key("r", "restart"),
+        key("x / d", "remove (confirm)"),
         Line::from(""),
         section("Logs"),
         key("PgUp / PgDn", "page up / down"),
@@ -36,15 +41,6 @@ pub fn render(frame: &mut Frame, area: Rect) {
 
     frame.render_widget(Clear, popup);
     frame.render_widget(Paragraph::new(lines).block(block), popup);
-}
-
-/// Center a fixed-size rect inside `area`.
-fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
-    let [h] = Layout::horizontal([horizontal])
-        .flex(Flex::Center)
-        .areas(area);
-    let [v] = Layout::vertical([vertical]).flex(Flex::Center).areas(h);
-    v
 }
 
 fn section(title: &str) -> Line<'_> {

@@ -4,6 +4,7 @@
 //! [`DockerClient`]. It owns a cloneable bollard [`Docker`] handle (cheap to
 //! clone — it's `Arc`-backed internally) so background tasks can each hold one.
 
+pub mod actions;
 pub mod logs;
 pub mod model;
 pub mod stats;
