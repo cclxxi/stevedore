@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-15
+
+### Added
+
+- Container lifecycle actions from the list: start (`S`), stop (`s`),
+  restart (`r`), and remove (`x` / `d`)
+- Confirmation overlay before destructive actions (remove)
+- Status-line feedback reporting each action's success or failure
+
 ## [0.1.0] - 2026-06-02
 
 ### Added
@@ -18,5 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Help overlay with keybindings
 - Graceful handling of an unreachable Docker daemon (no panics; terminal restored)
 
-[Unreleased]: https://github.com/cclxxi/stevedore/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/cclxxi/stevedore/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/cclxxi/stevedore/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/cclxxi/stevedore/releases/tag/v0.1.0
